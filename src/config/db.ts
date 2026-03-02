@@ -17,7 +17,6 @@ const connectDB = async (): Promise<void> => {
     } else {
       console.error('An unknown error occurred while connecting to MongoDB');
     }
-    process.exit(1);
   }
 };
 
