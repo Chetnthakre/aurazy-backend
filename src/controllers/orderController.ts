@@ -17,9 +17,13 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ success: false, message: "No items" });
     }
 
+    if (!totalPrice || isNaN(totalPrice) || totalPrice <= 0) {
+        return res.status(400).json({ success: false, message: "Invalid total price" });
+    }
+
     // 1️⃣ Create Razorpay Order
     const razorpayOrder = await razorpay.orders.create({
-      amount: totalPrice * 100,
+      amount: Math.round(totalPrice * 100), // Ensure integer amount in paise
       currency: "INR",
     });
 
