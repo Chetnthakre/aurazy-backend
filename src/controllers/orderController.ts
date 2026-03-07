@@ -2,13 +2,14 @@ import { Request, Response } from "express";
 import Razorpay from "razorpay";
 import crypto from "crypto";
 import Order from "../models/Order";
+import { AuthRequest } from "../middleware/authMiddleware";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
   key_secret: process.env.RAZORPAY_KEY_SECRET!,
 });
 
-export const createOrder = async (req: Request, res: Response) => {
+export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
     const { items, shippingAddress, totalPrice } = req.body;
 
@@ -24,6 +25,7 @@ export const createOrder = async (req: Request, res: Response) => {
 
     // 2️⃣ Save in DB
     const order = new Order({
+      user: req.user ? req.user._id : undefined,
       items,
       shippingAddress,
       totalPrice,
@@ -35,6 +37,7 @@ export const createOrder = async (req: Request, res: Response) => {
 
     res.status(201).json({
       success: true,
+      razorpayOrder, // Returning the full razorpayOrder object as expected by frontend
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
@@ -45,6 +48,19 @@ export const createOrder = async (req: Request, res: Response) => {
     res.status(500).json({ success: false, message: "Order failed" });
   }
 };
+
+export const getMyOrders = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Not authorized" });
+    }
+    const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 });
+    res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 export const verifyPayment = async (req: Request, res: Response) => {
   try {
