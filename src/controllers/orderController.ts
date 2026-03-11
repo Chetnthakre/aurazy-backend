@@ -13,6 +13,10 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
     const { items, shippingAddress, totalPrice } = req.body;
 
+
+
+
+
     if (!items || items.length === 0) {
       return res.status(400).json({ success: false, message: "No items" });
     }
@@ -27,15 +31,31 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       currency: "INR",
     });
 
+
+
+
     // 2️⃣ Save in DB
     const order = new Order({
       user: req.user ? req.user._id : undefined,
       items,
-      shippingAddress,
+      shippingAddress: {
+        name: shippingAddress.name,
+        email: shippingAddress.email,
+        phone: shippingAddress.phone,
+        address: shippingAddress.address,
+        city: shippingAddress.city,
+        pincode: shippingAddress.pincode
+      },
       totalPrice,
       razorpayOrderId: razorpayOrder.id,
       status: "pending",
     });
+
+
+
+
+
+    
 
     await order.save();
 
